@@ -622,7 +622,7 @@ def create_mcp_server() -> FastMCP:
         return f"Available vector databases:\n{json.dumps(db_list, indent=2)}"
 
     @app.custom_route("/health", methods=["GET"])
-    async def health_check(request: Request) -> str:
+    async def health_check(request) -> str:
         return "OK"
 
     return app
