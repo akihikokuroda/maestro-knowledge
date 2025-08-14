@@ -2,8 +2,7 @@ name: Maestro Knowledge Build and Upload Images
 
 on:
   push:
-    tags:
-      - "v*"
+    branches: [ health ]
 
 jobs:
   build-upload:

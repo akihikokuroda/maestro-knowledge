@@ -621,8 +621,11 @@ def create_mcp_server() -> FastMCP:
         logger.info(f"Returning {len(db_list)} databases")
         return f"Available vector databases:\n{json.dumps(db_list, indent=2)}"
 
-    return app
+    @app.custom_route("/health", methods=["GET"])
+    async def health_check(request: Request) -> str:
+        return "OK"
 
+    return app
 
 async def main():
     """Main entry point for the MCP server."""
