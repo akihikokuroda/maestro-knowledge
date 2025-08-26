@@ -55,7 +55,7 @@ class VectorDatabase(ABC):
         pass
 
     @abstractmethod
-    def write_documents(
+    async def write_documents(
         self,
         documents: List[Dict[str, Any]],
         embedding: str = "default",
@@ -74,7 +74,7 @@ class VectorDatabase(ABC):
         """
         pass
 
-    def write_documents_to_collection(
+    async def write_documents_to_collection(
         self,
         documents: List[Dict[str, Any]],
         collection_name: str,
@@ -91,7 +91,7 @@ class VectorDatabase(ABC):
                       - "default": Use database's default embedding strategy
                       - Specific model name: Use the specified embedding model
         """
-        return self.write_documents(documents, embedding, collection_name)
+        return await self.write_documents(documents, embedding, collection_name)
 
     def write_document(
         self,

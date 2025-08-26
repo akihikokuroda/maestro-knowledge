@@ -6,9 +6,12 @@ import json
 import logging
 import sys
 import os
+import time
 from typing import Any, Dict, List
 
 from fastmcp import FastMCP
+from starlette.requests import Request
+from starlette.responses import PlainTextResponse
 from pydantic import BaseModel, Field
 
 from ..db.vector_db_factory import create_vector_database
@@ -211,6 +214,10 @@ def create_mcp_server() -> FastMCP:
     # Create FastMCP server directly
     app = FastMCP("maestro-vector-db")
 
+    @app.custom_route("/health", methods=["GET"])
+    async def health_check(request: Request) -> PlainTextResponse:
+        return PlainTextResponse("OK")
+
     @app.tool()
     async def create_vector_database_tool(input: CreateVectorDatabaseInput) -> str:
         """Create a new vector database instance."""
@@ -277,6 +284,7 @@ def create_mcp_server() -> FastMCP:
     @app.tool()
     async def write_documents(input: WriteDocumentsInput) -> str:
         """Write documents to a vector database with specified embedding strategy."""
+        print("write_documents")
         db = get_database_by_name(input.db_name)
         db.write_documents(input.documents, embedding=input.embedding)
 
@@ -285,6 +293,7 @@ def create_mcp_server() -> FastMCP:
     @app.tool()
     async def write_document(input: WriteDocumentInput) -> str:
         """Write a single document to a vector database with specified embedding strategy."""
+        print("write_document")
         db = get_database_by_name(input.db_name)
         document = {
             "url": input.url,
@@ -296,6 +305,9 @@ def create_mcp_server() -> FastMCP:
         if input.vector is not None:
             document["vector"] = input.vector
 
+        # asyncio.to_thread(time.sleep, 30)
+        # task = asyncio.create_task(asyncio.to_thread(time.sleep, 30))
+        # await task
         db.write_document(document, embedding=input.embedding)
 
         return f"Successfully wrote document '{input.url}' to vector database '{input.db_name}' using embedding '{input.embedding}'"
@@ -305,6 +317,7 @@ def create_mcp_server() -> FastMCP:
         input: WriteDocumentToCollectionInput,
     ) -> str:
         """Write a single document to a specific collection in a vector database with specified embedding strategy."""
+        print(f"write_document_to_collection: embedding={input.embedding}")
         db = get_database_by_name(input.db_name)
 
         # Check if the collection exists
@@ -330,10 +343,9 @@ def create_mcp_server() -> FastMCP:
             document["vector"] = input.vector
 
         # Use the new write_documents_to_collection method
-        db.write_documents_to_collection(
+        await db.write_documents_to_collection(
             [document], input.collection_name, embedding=input.embedding
         )
-
         return f"Successfully wrote document '{input.doc_name}' to collection '{input.collection_name}' in vector database '{input.db_name}' using embedding '{input.embedding}'"
 
     @app.tool()

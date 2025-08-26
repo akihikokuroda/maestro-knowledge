@@ -5,6 +5,7 @@ import json
 import os
 import warnings
 from typing import List, Dict, Any
+import asyncio
 
 # Suppress Pydantic deprecation warnings from dependencies
 warnings.filterwarnings(
@@ -105,7 +106,7 @@ class MilvusVectorDatabase(VectorDatabase):
             if original_milvus_uri:
                 os.environ["MILVUS_URI"] = original_milvus_uri
 
-    def _generate_embedding(self, text: str, embedding_model: str) -> List[float]:
+    async def _generate_embedding(self, text: str, embedding_model: str) -> List[float]:
         """
         Generate embeddings for text using the specified model.
 
@@ -149,7 +150,7 @@ class MilvusVectorDatabase(VectorDatabase):
                     model_to_use = "text-embedding-ada-002"
 
             client = openai.OpenAI(**client_kwargs)
-            response = client.embeddings.create(model=model_to_use, input=text)
+            response = await asyncio.to_thread(client.embeddings.create, model=model_to_use, input=text)
 
             return response.data[0].embedding
 
@@ -265,7 +266,7 @@ class MilvusVectorDatabase(VectorDatabase):
                 vector_field_name="vector",
             )
 
-    def write_documents(
+    async def write_documents(
         self,
         documents: List[Dict[str, Any]],
         embedding: str = "default",
@@ -317,7 +318,7 @@ class MilvusVectorDatabase(VectorDatabase):
                     )
             else:
                 # Use specified embedding model
-                doc_vector = self._generate_embedding(doc.get("text", ""), embedding)
+                doc_vector = await self._generate_embedding(doc.get("text", ""), embedding)
 
             if doc_vector is None:
                 raise ValueError(f"Failed to generate vector for document {i}")
